@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta charset="utf-8"/>
+</head>
+<body>
+<div id="jjj">
+
+</div>
+<script type="text/javascript" src="jquery.js"></script>
+<!--<script type="text/javascript" src="ui.js"></script>-->
+<script type="text/javascript">
+
+	$.ui = {};
+
+	(function ($, undefined) {
+		function isPlainObject(obj) {
+			return Object.prototype.toString.call(obj) === '[object Object]';
+		}
+
+		//从某个元素上读取某个属性
+		function parseData(data) {
+			try { // JSON.parse可能报错
+				// 当data===null表示，没有此属性
+				data = data === 'true' ? true :
+						data === 'false' ? false : data === 'null' ? null :
+
+							// 如果是数字类型，则将字符串类型转成数字类型
+								+data + '' === data ? +data :
+										/(?:\{[\s\S]*\}|\[[\s\S]*\])$/.test(data) ?
+												JSON.parse(data) : data;
+			} catch (ex) {
+				data = undefined;
+			}
+
+			return data;
+		}
+
+		//合并对象
+		function mergeObj() {
+			var args = [].slice.call(arguments),
+					i = args.length,
+					last;
+
+			while (i--) {
+				last = last || args[i];
+				isPlainObject(args[i]) || args.splice(i, 1);
+			}
+
+			return args.length ?
+					$.extend.apply(null, [true, {}].concat(args)) : last;
+			// 深拷贝，options中某项为object时，用例中不能用==判断
+		}
+
+		//所有实例唯一id
+		$.ui.guid = 0;
+
+		//创建一个类
+		function createClass(name, object) {
+			function klass(el, options) {
+				var me = this;
+				me.el = $(el);
+				var opts = me.options = mergeObj(klass.options, options);
+				me.name = name.toLowerCase();
+
+				$.ui.guid++;
+				me.guid = $.ui.guid;
+
+				//加载组件相应样式
+				me.init();
+
+				//组件统计
+				if (/isdebug=(-\d)*-0/.test(location.search) && window.pageConfig) {
+					if (window.pageConfig.uiLog) {
+						window.pageConfig.uiLog.push(me);
+					} else {
+						window.pageConfig.uiLog = [me];
+					}
+					console.log(me);
+				}
+
+				return me;
+			}
+
+			var fn = ['options'];
+			for (var i = 0; i < fn.length; i++) {
+				var item = fn[i];
+				object[item] && (klass[item] = object[item]);
+				delete object[item];
+			}
+
+			for (var i in object) {
+				klass.prototype[i] = object[i];
+			}
+
+			return klass;
+		}
+
+		//在$.fn上挂组件
+		$.ui.fn = function (name) {
+			var name = name.toLowerCase();
+			$.fn[name] = function (opts) {
+				var obj;
+				$.each(this, function (i, el) {
+					obj = new $.ui[name](el, opts);
+				});
+				return obj;
+			};
+		}
+
+		/**
+		 * 定义一个组件
+		 * @methord define
+		 */
+		$.ui.define = function (name, object) {
+			$.ui[name] = createClass(name, object);
+			$.ui.fn(name);
+		};
+
+	})(jQuery);
+
+	$(function() {
+		$.ui.define("papa", {
+			options: {
+				jj: "jjjjjjjjjjjjjjj"
+			},
+			start: function () {
+				var me = this;
+				me.el.html(me.options.jj);
+			},
+			init: function() {
+				this.start();
+			}
+		});
+
+		$("#jjj").papa({
+			jj: "papapapapa",
+			init: function () {
+				var a = this;
+				a.start();
+			}
+		});
+	});
+</script>
+</body>
+</html>
